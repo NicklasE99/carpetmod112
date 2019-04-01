@@ -21,6 +21,7 @@ import carpet.carpetclient.CarpetClientChunkLogger;
 import carpet.carpetclient.CarpetClientRuleChanger;
 import carpet.helpers.RandomTickOptimization;
 import carpet.utils.TickingArea;
+import carpet.worldedit.WorldEditBridge;
 import net.minecraft.init.Blocks;
 import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.util.math.AxisAlignedBB;
@@ -38,7 +39,7 @@ public class CarpetSettings
     public static boolean locked = false;
 
     // TODO: replace these constants at build time
-    public static final String carpetVersion = "v19_03_08b";
+    public static final String carpetVersion = "v19_03_30";
     public static final String minecraftVersion = "1.12";
     public static final String mcpMappings = "20180713-1.12";
 
@@ -179,10 +180,14 @@ public class CarpetSettings
     @SurvivalDefault
     public static boolean hopperCounters = false;
 
-    @Rule(desc = "Enables integration with redstone multimeter mod", category = {CREATIVE, SURVIVAL}, extra = {
+    @Rule(desc = "Enables integration with redstone multimeter mod", category = {CREATIVE, SURVIVAL}, validator = "validateRedstoneMultimeter", extra = {
             "Required clients with RSMM Mod by Narcoleptic Frog. Enables multiplayer experience with RSMM Mod"
     })
     public static boolean redstoneMultimeter = false;
+    private static boolean validateRedstoneMultimeter(boolean value) {
+        CarpetServer.rsmmChannel.setEnabled(value);
+        return true;
+    }
 
     @Rule(desc = "Pistons can push tile entities, like hoppers, chests etc.", category = EXPERIMENTAL)
     public static boolean movableTileEntities = false;
@@ -208,6 +213,12 @@ public class CarpetSettings
     @Rule(desc = "Transparent observers, TNT and redstone blocks. May cause lighting artifacts", category = CREATIVE, validator = "validateFlyingMachineTransparent")
     public static boolean flyingMachineTransparent = false;
 
+    @Rule(desc = "Structure blocks remove entities in the bounding box when load entity option is enabled.", category = CREATIVE)
+    public static boolean structuresReplaceEntities = false;
+
+    @Rule(desc = "Allows to always be able to eat cakes.", category = CREATIVE)
+    public static boolean cakeAlwaysEat;
+    
     private static boolean validateFlyingMachineTransparent(boolean value) {
         int newOpacity = value ? 0 : 255;
         Blocks.OBSERVER.setLightOpacity(newOpacity);
@@ -309,11 +320,15 @@ public class CarpetSettings
         return true;
     }
 
-    @Rule(desc = "Enables/disables WorldEdit.", category = {CREATIVE, EXPERIMENTAL}, extra = {
+    @Rule(desc = "Enables/disables WorldEdit.", category = {CREATIVE, EXPERIMENTAL}, validator = "validateWorldEdit", extra = {
             "Only works in WorldEdit is in the classpath."
     })
     @CreativeDefault
     public static boolean worldEdit = false;
+    private static boolean validateWorldEdit(boolean value) {
+        CarpetServer.wecuiChannel.setEnabled(value && WorldEditBridge.worldEditPresent);
+        return true;
+    }
 
     @Rule(desc = "Disables player entity collision.", category = {CREATIVE, EXPERIMENTAL})
     public static boolean disablePlayerCollision = false;
@@ -323,6 +338,12 @@ public class CarpetSettings
 
     @Rule(desc = "Disables snow, ice and lightning in nether and end for stable LCG.", category = {CREATIVE})
     public static boolean enableStableLCGNetherEnd = false;
+
+    @Rule(desc = "Enable creative player no-clip.", category = {CREATIVE})
+    public static boolean creativeNoClip = false;
+
+    @Rule(desc = "Allows players to place blocks inside entity's.", category = {CREATIVE})
+    public static boolean ignoreEntityWhenPlacing = false;
     // ===== FIXES ===== //
     /*
      * Rules in this category should end with the "Fix" suffix
@@ -512,6 +533,14 @@ public class CarpetSettings
     @BugFixDefault
     public static boolean effectsFix = false;
 
+    @Rule(desc = "Fixes entity tracker not rendering entitys such as players in minecarts or boats.", category = FIX)
+    public static boolean entityTrackerFix;
+
+    @Rule(desc = "Players go invisible after using portals.", category = FIX)
+    public static boolean portalTurningPlayersInvisibleFix;
+
+    @Rule(desc = "Fixes updates suppression causing server crashes.", category = FIX)
+    public static boolean updateSuppressionCrashFix;
 
     // ===== SURVIVAL FEATURES ===== //
 
@@ -616,6 +645,12 @@ public class CarpetSettings
             "Cactus in a dispenser gives the dispenser the ability to rotate the blocks that are in front of it anti-clockwise if possible."
     })
     public static boolean rotatorBlock = false;
+
+    @Rule(desc = "Water bottles in dispensers fill with water when dispensed with water in front.", category = EXPERIMENTAL)
+    public static boolean dispenserWaterBottle;
+
+    @Rule(desc = "Minecarts can be filled with hoppers, chests, tnt and furnace.", category = EXPERIMENTAL)
+    public static boolean dispenserMinecartFiller;
 
     @Rule(desc = "Customizable tile tick limit", category = SURVIVAL, options = {"1000", "65536", "1000000"}, validator = "validateTileTickLimit", extra = {
             "-1 for no limit"
